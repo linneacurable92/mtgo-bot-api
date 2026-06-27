@@ -3,7 +3,7 @@ module github.com/mtgo-labs/mtgo-bot-api
 go 1.26.4
 
 require (
-	github.com/mtgo-labs/mtgo v0.10.0
+	github.com/mtgo-labs/mtgo v0.10.1-0.20260625161238-9dee03024871
 	go.uber.org/goleak v1.3.0
 	golang.org/x/net v0.56.0
 	modernc.org/sqlite v1.53.0
@@ -25,9 +25,3 @@ require (
 	modernc.org/mathutil v1.7.1 // indirect
 	modernc.org/memory v1.11.0 // indirect
 )
-
-// TEMP: bot-api depends on tg.InputPeerPhotoFileLocationLegacy (legacy dialog
-// photos), which lives in mtgo's untracked tg/legacy_file_locations.go and is
-// NOT yet in published v0.10.0. Keep building against the local tree until that
-// file is released; then remove this replace and bump to the new version.
-// replace github.com/mtgo-labs/mtgo => ../mtgo
