@@ -1,9 +1,9 @@
 name: Release
 
 # Build cross-platform static binaries and publish a GitHub release whenever a
-# `v*` tag is pushed. Mirrors the pageton/dbview release pipeline, simplified
-# for pure-Go CGO_ENABLED=0 static binaries (no manylinux2014 Docker step
-# needed) and adapted to mtgo-bot-api's cmd path + version var.
+# `v*` tag is pushed. Mirrors pageton/dbview: each platform ships BOTH a raw
+# binary (e.g. mtgo-bot-api_0.1.0_linux_amd64, ..._windows_amd64.exe) AND a
+# packaged archive (binary + README), plus a combined sha256 checksums file.
 
 on:
   push:
@@ -46,20 +46,27 @@ jobs:
           VERSION="${VERSION#v}"   # tag is vX.Y.Z; version string is X.Y.Z
           GOOS="${{ matrix.goos }}"
           GOARCH="${{ matrix.goarch }}"
-          ARCHIVE="${APP_NAME}_${VERSION}_${GOOS}_${GOARCH}"
-          mkdir -p "dist/${ARCHIVE}"
+          EXT="${{ matrix.ext }}"
+          BASE="${APP_NAME}_${VERSION}_${GOOS}_${GOARCH}"
 
+          mkdir -p dist dist/package
+
+          # Raw binary for direct download (e.g. mtgo-bot-api_0.1.0_linux_amd64).
           CGO_ENABLED=0 GOOS="$GOOS" GOARCH="$GOARCH" \
             go build -buildvcs=false -trimpath \
             -ldflags="-s -w -X github.com/mtgo-labs/mtgo-bot-api/internal/version.Version=${VERSION}" \
-            -o "dist/${ARCHIVE}/${APP_NAME}${{ matrix.ext }}" ./cmd/${APP_NAME}
+            -o "dist/${BASE}${EXT}" ./cmd/${APP_NAME}
 
-          cp README.md "dist/${ARCHIVE}/"
-
+          # Packaged archive (binary + README) under dist/package to avoid
+          # colliding with the raw binary name in dist/.
+          PKGDIR="dist/package/${BASE}"
+          mkdir -p "${PKGDIR}"
+          cp "dist/${BASE}${EXT}" "${PKGDIR}/${APP_NAME}${EXT}"
+          cp README.md "${PKGDIR}/"
           if [ "$GOOS" = "windows" ]; then
-            (cd dist && zip -rq "${ARCHIVE}.zip" "${ARCHIVE}")
+            (cd dist/package && zip -rq "../${BASE}.zip" "${BASE}")
           else
-            tar -C dist -czf "dist/${ARCHIVE}.tar.gz" "${ARCHIVE}"
+            tar -C dist/package -czf "dist/${BASE}.tar.gz" "${BASE}"
           fi
 
       - name: Upload build artifact
@@ -69,6 +76,7 @@ jobs:
           path: |
             dist/*.tar.gz
             dist/*.zip
+            dist/${{ env.APP_NAME }}_*_${{ matrix.goos }}_${{ matrix.goarch }}${{ matrix.ext }}
           if-no-files-found: error
 
   publish:
@@ -86,7 +94,14 @@ jobs:
         run: |
           set -euo pipefail
           cd dist
-          sha256sum *.tar.gz *.zip > checksums.txt
+          sha256sum \
+            *.tar.gz *.zip \
+            ${APP_NAME}_*_linux_amd64 \
+            ${APP_NAME}_*_linux_arm64 \
+            ${APP_NAME}_*_darwin_amd64 \
+            ${APP_NAME}_*_darwin_arm64 \
+            ${APP_NAME}_*_windows_amd64.exe \
+            > checksums.txt
           cat checksums.txt
 
       - name: Create release
@@ -96,4 +111,9 @@ jobs:
           files: |
             dist/*.tar.gz
             dist/*.zip
+            dist/${{ env.APP_NAME }}_*_linux_amd64
+            dist/${{ env.APP_NAME }}_*_linux_arm64
+            dist/${{ env.APP_NAME }}_*_darwin_amd64
+            dist/${{ env.APP_NAME }}_*_darwin_arm64
+            dist/${{ env.APP_NAME }}_*_windows_amd64.exe
             dist/checksums.txt
